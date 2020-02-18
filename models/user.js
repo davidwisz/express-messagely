@@ -58,7 +58,6 @@ class User {
    * [{username, first_name, last_name, phone}, ...] */
   static async all() { 
     const users = await db.query(`SELECT username, first_name, last_name, phone FROM users`);
-    console.log('users.rows', users.rows)
     return users.rows;
   }
 
