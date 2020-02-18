@@ -6,6 +6,7 @@ const { SECRET_KEY } = require("../config");
 /** Middleware: Authenticate user. */
 
 function authenticateJWT(req, res, next) {
+  console.log('authenticateJWT!')
   try {
     const tokenFromBody = req.body._token;
     const payload = jwt.verify(tokenFromBody, SECRET_KEY);
@@ -19,6 +20,7 @@ function authenticateJWT(req, res, next) {
 /** Middleware: Requires user is authenticated. */
 
 function ensureLoggedIn(req, res, next) {
+  console.log('ensureLoggedIn!')
   if (!req.user) {
     return next({ status: 401, message: "Unauthorized" });
   } else {
@@ -40,10 +42,27 @@ function ensureCorrectUser(req, res, next) {
     return next({ status: 401, message: "Unauthorized" });
   }
 }
+
+/** Middleware: Requires correct username. */
+
+async function ensureMessageUser(req, res, next) {
+  try {
+    req.message = await Message.get(req.params.id);
+    if (req.user.username === req.message.from_username || req.user.username === req.message.to_username) {
+      return next();
+    } else {
+      return next({ status: 401, message: "Unauthorized" });
+    }
+  } catch (err) {
+    // errors would happen here if we made a request and req.user is undefined
+    return next({ status: 401, message: "Unauthorized" });
+  }
+}
 // end
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
-  ensureCorrectUser
+  ensureCorrectUser,
+  ensureMessageUser
 };

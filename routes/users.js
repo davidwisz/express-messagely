@@ -1,13 +1,13 @@
 const express = require("express");
 const User = require("../models/user");
-const { ensureLoggedIn } = require('../middleware/auth');
+const { ensureLoggedIn, ensureCorrectUser } = require('../middleware/auth');
 // const ExpressError = require('../expressError');
 
 const router = new express.Router();
 
 const app = express();
 app.use(express.json());
-app.use(ensureLoggedIn);
+router.use(ensureLoggedIn);
 
 
 /** GET / - get list of users.
@@ -29,7 +29,7 @@ router.get("/", async function (req, res, next) {
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
-router.get("/:username", async function (req, res, next) {
+router.get("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
     const username = req.params.username;
     const user = await User.get(username);
