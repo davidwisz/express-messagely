@@ -8,6 +8,7 @@ const router = new express.Router();
 const app = express();
 router.use(express.json());
 router.use(ensureLoggedIn);
+
 /** GET /:id - get detail of message.
  *
  * => {message: {id,
@@ -23,7 +24,8 @@ router.use(ensureLoggedIn);
 router.get("/:id", ensureMessageUser, async function (req, res, next) {
   try {
     const message = req.message;
-    return res.send({"message": { "id": message.id, "body": message.body, "sent_at": message.sent_at, "from_user": {"username": message.from_username, "first_name": message.from_first_name, "last_name": message.from_last_name, "phone": message.from_phone}, "to_user": {"username": message.to_username, "first_name": message.to_first_name, "last_name": message.to_last_name, "phone": message.to_phone}}});
+    console.log("MESSAGE: ", message)
+    return res.send({"message": { "id": message.id, "body": message.body, "sent_at": message.sent_at, "from_user": {"username": message.from_user.username, "first_name": message.from_user.first_name, "last_name": message.from_user.last_name, "phone": message.from_user.phone}, "to_user": {"username": message.to_user.username, "first_name": message.to_user.first_name, "last_name": message.to_user.last_name, "phone": message.to_user.phone}}});
   } catch (err) {
     return next(err);
   }
@@ -44,8 +46,6 @@ router.post("/", async function (req, res, next) {
   }
 });
 
-
-
 /** POST/:id/read - mark message as read:
  *
  *  => {message: {id, read_at}}
@@ -53,5 +53,13 @@ router.post("/", async function (req, res, next) {
  * Make sure that the only the intended recipient can mark as read.
  *
  **/
+router.get("/:id/read", ensureMessageUser, async function (req, res, next) {
+  try {
+    const message = await Message.markRead(req.params.id);
+    return res.send({ message });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 module.exports = router;

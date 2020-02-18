@@ -2,11 +2,11 @@
 
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../config");
+const Message = require("../models/message");
 
 /** Middleware: Authenticate user. */
 
 function authenticateJWT(req, res, next) {
-  console.log('authenticateJWT!')
   try {
     const tokenFromBody = req.body._token;
     const payload = jwt.verify(tokenFromBody, SECRET_KEY);
@@ -20,7 +20,6 @@ function authenticateJWT(req, res, next) {
 /** Middleware: Requires user is authenticated. */
 
 function ensureLoggedIn(req, res, next) {
-  console.log('ensureLoggedIn!')
   if (!req.user) {
     return next({ status: 401, message: "Unauthorized" });
   } else {
@@ -48,7 +47,22 @@ function ensureCorrectUser(req, res, next) {
 async function ensureMessageUser(req, res, next) {
   try {
     req.message = await Message.get(req.params.id);
-    if (req.user.username === req.message.from_username || req.user.username === req.message.to_username) {
+    const is_from_user = (req.user.username === req.message.from_user.username);
+    const is_to_user = (req.user.username === req.message.to_user.username);
+    let is_authorized = false;
+
+    console.log("FROM: ", is_from_user);
+    console.log("TO: ", is_to_user);
+    if (req.route.path.includes('/read')) {
+      if (is_to_user){
+        is_authorized = true;
+      }
+    } else if (is_from_user || is_to_user) {
+      is_authorized = true;
+    }
+
+    console.log("AUTH: ", is_authorized);
+    if (is_authorized) {
       return next();
     } else {
       return next({ status: 401, message: "Unauthorized" });
